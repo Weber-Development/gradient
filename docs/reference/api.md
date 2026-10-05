@@ -17,6 +17,7 @@ Generates one scale per entry of `colors` (`{ brand: "#e30613" }`), plus a neutr
 | `saturation` | `1` | Multiplies the chroma of all steps |
 | `hueShift` | `0` | Degrees the hue turns from the lightest to the darkest step |
 | `pin` | `false` | Put the exact input color on its anchor step |
+| `status` | `false` | `true` adds `success`, `warning`, `danger`, `info`; an object overrides single colors |
 
 Returns `{ scales: Scale[] }`.
 
@@ -48,6 +49,10 @@ interface Swatch {
 
 Measures the [safe pairs](../guides/steps.md#safe-pairs) in both modes. Returns `{ scale, mode, foreground, background, ratio, required, pass }[]`.
 
+### `checkDistinguishable(palette, options?)`
+
+Compares colored scales pairwise at `step` (default 600) with normal vision and simulated color vision deficiencies. Returns `{ a, b, mode, vision, distance, pass }[]`; `minDistance` defaults to 0.08 (ΔE in OKLab). See [Status colors and color vision](../guides/status-colors.md).
+
 ## Exports
 
 | Function | Returns |
@@ -69,3 +74,6 @@ Measures the [safe pairs](../guides/steps.md#safe-pairs) in both modes. Returns 
 | `contrast(a, b)`, `luminance(hex)` | WCAG 2 contrast ratio and relative luminance |
 | `wcagLevel(ratio, large?)` | `"AAA"`, `"AA"` or `"fail"` |
 | `anchorStep(color)` | Step closest to a color |
+| `simulate(hex, deficiency)` | Color as seen with `protanopia`, `deuteranopia` or `tritanopia` |
+| `deltaE(a, b)` | Perceptual distance in OKLab |
+| `statusColors(brand)` | The derived status colors as `oklch()` strings |

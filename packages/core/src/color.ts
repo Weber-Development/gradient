@@ -6,13 +6,13 @@ export interface Oklch {
 }
 
 /** Linear-light sRGB, each channel 0–1 when in gamut. */
-type LinearRgb = [number, number, number];
+export type LinearRgb = [number, number, number];
 
-const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const toGamma = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
+export const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+export const toGamma = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
 
 /** OKLab matrices by Björn Ottosson (https://bottosson.github.io/posts/oklab/). */
-function linearToOklch([r, g, b]: LinearRgb): Oklch {
+export function linearToOklch([r, g, b]: LinearRgb): Oklch {
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
@@ -25,7 +25,7 @@ function linearToOklch([r, g, b]: LinearRgb): Oklch {
   return { l: L, c, h };
 }
 
-function oklchToLinear({ l: L, c, h }: Oklch): LinearRgb {
+export function oklchToLinear({ l: L, c, h }: Oklch): LinearRgb {
   const rad = (h * Math.PI) / 180;
   const A = c * Math.cos(rad);
   const B = c * Math.sin(rad);

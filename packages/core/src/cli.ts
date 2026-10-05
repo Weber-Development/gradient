@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
+import { checkDistinguishable } from "./cvd";
 import { type DarkMode, toCss } from "./export/css";
 import { toTailwind, toTailwindV3 } from "./export/tailwind";
 import { toJson, toTokens } from "./export/tokens";
@@ -17,17 +18,20 @@ Examples:
 Options:
   --name <name>          Name of the first color (default: brand)
   --format <format>      css (default) | tailwind | tailwind3 | tokens | json | table
-  --dark <mode>          both (default) | media | class | none
+  --dark <mode>          both (default) | media | class | light-dark | none
   --dark-selector <sel>  Class that turns dark mode on (default: .dark)
   --hex                  css format: hex values instead of oklch()
   --prefix <prefix>      css format: variable prefix (default: color)
+  --status               Add success, warning, danger and info scales
   --no-neutral           Do not add the tinted grey "neutral"
   --neutral-chroma <n>   Chroma of the neutral, 0 for pure grey (default: auto)
   --saturation <n>       Multiply the chroma of all steps (default: 1)
   --hue-shift <deg>      Turn the hue from the lightest to the darkest step
   --pin                  Put the exact input color on its closest step
   --out <file>           Write to a file instead of stdout
-  --check                Print the contrast checks; exit code 1 if one fails
+  --check                Print the contrast checks; exit code 1 if one fails.
+                         Also warns about colors that look alike with a
+                         color vision deficiency (no effect on the exit code)
 
 Every step reaches a fixed contrast: 500 is at least 3:1 on white, 600 at
 least 4.5:1, 800 at least 7:1, in dark mode the same on black.`;
@@ -45,6 +49,7 @@ export async function main(argv: string[]): Promise<number> {
       hex: { type: "boolean" },
       prefix: { type: "string" },
       neutral: { type: "boolean", default: true },
+      status: { type: "boolean" },
       "neutral-chroma": { type: "string" },
       saturation: { type: "string" },
       "hue-shift": { type: "string" },
@@ -72,10 +77,11 @@ export async function main(argv: string[]): Promise<number> {
     saturation: values.saturation ? number(values.saturation) : undefined,
     hueShift: values["hue-shift"] ? number(values["hue-shift"]) : undefined,
     pin: values.pin,
+    status: values.status,
   });
 
   const dark = (values.dark ?? "both") as DarkMode;
-  if (!["both", "media", "class", "none"].includes(dark)) {
+  if (!["both", "media", "class", "light-dark", "none"].includes(dark)) {
     throw new Error(`Unknown --dark "${dark}".`);
   }
   const darkSelector = values["dark-selector"];
@@ -102,6 +108,14 @@ export async function main(argv: string[]): Promise<number> {
       );
     }
     console.error(`${checks.length - failed.length}/${checks.length} contrast checks passed.`);
+    const alike = new Map<string, string[]>();
+    for (const c of checkDistinguishable(palette).filter((c) => !c.pass && c.mode === "light")) {
+      const key = `${c.a} and ${c.b}`;
+      alike.set(key, [...(alike.get(key) ?? []), c.vision]);
+    }
+    for (const [pair, visions] of alike) {
+      console.error(`note ${pair} look alike (${visions.join(", ")}): add an icon or a label.`);
+    }
     return failed.length > 0 ? 1 : 0;
   }
   return 0;

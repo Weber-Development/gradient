@@ -1,6 +1,6 @@
 # Gradient
 
-Accessible color scales from one brand color. Gradient generates eleven steps in OKLCH for light and dark mode, and every step reaches a fixed contrast, so the step number tells you what it is safe for. Export to CSS variables, Tailwind CSS v4 and v3, or design tokens. Zero dependencies.
+Accessible color scales from one brand color. Gradient generates eleven steps in OKLCH for light and dark mode, and every step reaches a fixed contrast, so the step number tells you what it is safe for. Status colors (success, warning, danger, info) that match your brand, a check for color vision deficiencies, and export to CSS variables (also as `light-dark()`), Tailwind CSS v4 and v3, or design tokens. Zero dependencies.
 
 ```sh
 npx @sweberdev/gradient "#e30613" --format tailwind --out app/gradient.css
@@ -25,15 +25,24 @@ Most palette generators interpolate lightness and hope for the best: `blue-500` 
 ## Library
 
 ```ts
-import { checkPalette, createPalette, toCss, toTailwind, toTokens } from "@sweberdev/gradient";
+import {
+  checkDistinguishable,
+  checkPalette,
+  createPalette,
+  toCss,
+  toTailwind,
+  toTokens,
+} from "@sweberdev/gradient";
 
-const palette = createPalette({ brand: "#e30613", accent: "#0a84ff" }); // + a tinted "neutral"
+const palette = createPalette({ brand: "#e30613", accent: "#0a84ff" }, { status: true });
+// + success, warning, danger, info and a tinted "neutral"
 
 palette.scales[0].light[600]; // { hex: "#e20211", css: "oklch(…)", contrast: 4.94, on: "#ffffff", … }
 toTailwind(palette); // @theme { --color-brand-50: oklch(…); … } + dark overrides
 toCss(palette, { dark: "class", format: "hex" });
 toTokens(palette); // W3C design tokens for Figma and Style Dictionary
 checkPalette(palette).every((c) => c.pass); // true
+checkDistinguishable(palette).filter((c) => !c.pass); // pairs that look alike with color blindness
 ```
 
 ## CLI
@@ -44,7 +53,7 @@ npx @sweberdev/gradient "#e30613" --format table      # preview with contrast ra
 npx @sweberdev/gradient "#e30613" --pin --check       # keep the exact brand color, fail if it breaks a promise
 ```
 
-Formats: `css` (default), `tailwind` (v4), `tailwind3`, `tokens`, `json`, `table`. Dark mode: `both` (system setting, a `.dark` or `.light` class overrides), `media`, `class`, `none`.
+Formats: `css` (default), `tailwind` (v4), `tailwind3`, `tokens`, `json`, `table`. Dark mode: `both` (system setting, a `.dark` or `.light` class overrides), `media`, `class`, `light-dark`, `none`. `--status` adds the status colors.
 
 ## Documentation
 

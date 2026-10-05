@@ -7,6 +7,7 @@ import {
   type ScaleOptions,
   type Step,
 } from "./scale";
+import { STATUS_NAMES, type StatusName, statusColors } from "./status";
 
 export interface Palette {
   scales: Scale[];
@@ -19,13 +20,21 @@ export interface PaletteOptions extends Omit<ScaleOptions, "name" | "chroma"> {
    * Default true.
    */
   neutral?: boolean | number;
+  /**
+   * Adds `success`, `warning`, `danger` and `info` scales that match the
+   * first color. `true` derives all four, an object overrides single ones,
+   * e.g. `{ danger: "#d4351c" }`. Colors you pass yourself under these names
+   * win. Default false.
+   */
+  status?: boolean | Partial<Record<StatusName, string>>;
 }
 
 /**
- * Generates one scale per color, plus a matching neutral.
+ * Generates one scale per color, plus a matching neutral and, on request,
+ * status colors.
  *
  * ```ts
- * const palette = createPalette({ brand: "#e30613", accent: "#0a84ff" });
+ * const palette = createPalette({ brand: "#e30613", accent: "#0a84ff" }, { status: true });
  * ```
  */
 export function createPalette(
@@ -34,11 +43,20 @@ export function createPalette(
 ): Palette {
   const entries = Object.entries(colors);
   if (entries.length === 0) throw new Error("createPalette needs at least one color.");
-  const { neutral = true, ...scaleOptions } = options;
+  const { neutral = true, status = false, ...scaleOptions } = options;
   const scales = entries.map(([name, color]) => {
     assertName(name);
     return generateScale(color, { ...scaleOptions, name });
   });
+  if (status) {
+    const derived = {
+      ...statusColors(entries[0]?.[1] as string),
+      ...(status === true ? {} : status),
+    };
+    for (const name of STATUS_NAMES) {
+      if (!colors[name]) scales.push(generateScale(derived[name], { name }));
+    }
+  }
   if (neutral !== false && !colors.neutral) {
     const first = entries[0]?.[1] as string;
     scales.push(generateNeutral(first, typeof neutral === "number" ? { chroma: neutral } : {}));

@@ -11,6 +11,15 @@ export {
 } from "./color";
 export { contrast, luminance, wcagLevel } from "./contrast";
 export {
+  checkDistinguishable,
+  DEFICIENCIES,
+  type Deficiency,
+  type DistinguishCheck,
+  type DistinguishOptions,
+  deltaE,
+  simulate,
+} from "./cvd";
+export {
   type ColorFormat,
   type CssOptions,
   type DarkMode,
@@ -44,3 +53,4 @@ export {
   type Swatch,
   stepsOf,
 } from "./scale";
+export { STATUS_HUES, STATUS_NAMES, type StatusName, statusColors } from "./status";
