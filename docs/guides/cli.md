@@ -13,17 +13,18 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 |---|---|---|
 | `--name <name>` | `brand` | Name of the first color |
 | `--format <format>` | `css` | `css`, `tailwind` (v4), `tailwind3`, `tokens`, `json`, `table` |
-| `--dark <mode>` | `both` | `both`, `media`, `class`, `none` |
+| `--dark <mode>` | `both` | `both`, `media`, `class`, `light-dark`, `none` |
 | `--dark-selector <sel>` | `.dark` | Class or attribute that turns dark mode on |
 | `--hex` | | `css` format: hex values instead of `oklch()` |
 | `--prefix <prefix>` | `color` | `css` format: variable prefix |
+| `--status` | | Add `success`, `warning`, `danger` and `info` scales |
 | `--no-neutral` | | Do not add the tinted grey `neutral` |
 | `--neutral-chroma <n>` | auto | Chroma of the neutral, `0` for pure grey |
 | `--saturation <n>` | `1` | Multiply the chroma of all steps |
 | `--hue-shift <deg>` | `0` | Turn the hue from the lightest to the darkest step |
 | `--pin` | | Put the exact input color on its closest step |
 | `--out <file>` | stdout | Write to a file |
-| `--check` | | Print failed contrast checks; exit code `1` if one fails |
+| `--check` | | Print failed contrast checks; exit code `1` if one fails. Also notes colors that look alike with a color vision deficiency |
 
 ## In CI
 

@@ -9,6 +9,7 @@
       "items": [
         "guides/steps",
         "guides/dark-mode",
+        "guides/status-colors",
         "guides/tailwind",
         "guides/css-and-tokens",
         "guides/cli"

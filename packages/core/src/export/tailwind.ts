@@ -1,6 +1,14 @@
 import type { Palette } from "../palette";
 import { STEPS } from "../scale";
-import { block, type CssOptions, darkBlocks, declarations, HEADER } from "./css";
+import {
+  block,
+  type CssOptions,
+  darkBlocks,
+  declarations,
+  HEADER,
+  lightDarkDeclarations,
+  schemeBlocks,
+} from "./css";
 
 export type TailwindOptions = Omit<CssOptions, "prefix" | "format" | "root">;
 
@@ -18,6 +26,14 @@ export type TailwindOptions = Omit<CssOptions, "prefix" | "format" | "root">;
 export function toTailwind(palette: Palette, options: TailwindOptions = {}): string {
   const light = declarations(palette, "light", { prefix: "color" });
   const dark = declarations(palette, "dark", { prefix: "color" });
+  if (options.dark === "light-dark") {
+    const parts = [
+      block(":root", ["color-scheme: light dark;"]),
+      ...schemeBlocks(options),
+      block("@theme", lightDarkDeclarations(light, dark)),
+    ];
+    return `${HEADER}\n${parts.join("\n\n")}\n`;
+  }
   const parts = [block("@theme", light), ...darkBlocks(dark, options)];
   return `${HEADER}\n${parts.join("\n\n")}\n`;
 }
@@ -34,6 +50,9 @@ export interface TailwindV3Output {
  * object that supports opacity modifiers like `bg-brand-500/50`.
  */
 export function toTailwindV3(palette: Palette, options: TailwindOptions = {}): TailwindV3Output {
+  if (options.dark === "light-dark") {
+    throw new Error('Tailwind v3 needs OKLCH channels and cannot use dark: "light-dark".');
+  }
   const cssOptions: CssOptions = { ...options, prefix: "color", format: "channels" };
   const light = declarations(palette, "light", cssOptions);
   const dark = declarations(palette, "dark", cssOptions);

@@ -3,7 +3,7 @@ import type { Palette } from "../palette";
 import { type Mode, STEPS } from "../scale";
 
 export type ColorFormat = "oklch" | "hex" | "channels";
-export type DarkMode = "media" | "class" | "both" | "none";
+export type DarkMode = "media" | "class" | "both" | "light-dark" | "none";
 
 export interface CssOptions {
   /** Variable prefix: `color` gives `--color-brand-500`. Default `color`. */
@@ -15,8 +15,9 @@ export interface CssOptions {
   format?: ColorFormat;
   /**
    * How dark mode switches: `media` (system setting), `class` (a class on
-   * `<html>`), `both` (system setting unless a class overrides it) or `none`.
-   * Default `both`.
+   * `<html>`), `both` (system setting unless a class overrides it),
+   * `light-dark` (one `light-dark()` value per variable, switched by
+   * `color-scheme`; the classes set `color-scheme`) or `none`. Default `both`.
    */
   dark?: DarkMode;
   /** Class that turns dark mode on. Default `.dark`. */
@@ -83,6 +84,40 @@ export function darkBlocks(lines: string[], options: CssOptions = {}): string[] 
 }
 
 /**
+ * Merges light and dark declarations into `light-dark()` values. Needs real
+ * colors, so the `channels` format is not supported.
+ */
+export function lightDarkDeclarations(light: string[], dark: string[]): string[] {
+  return light.map((line, i) => {
+    const [name, value] = splitDeclaration(line);
+    const [, darkValue] = splitDeclaration(dark[i] ?? line);
+    return value === darkValue ? line : `${name}: light-dark(${value}, ${darkValue});`;
+  });
+}
+
+function splitDeclaration(line: string): [string, string] {
+  const colon = line.indexOf(":");
+  return [
+    line.slice(0, colon),
+    line
+      .slice(colon + 1)
+      .trim()
+      .replace(/;$/, ""),
+  ];
+}
+
+/** `color-scheme` rules that let the classes switch `light-dark()` values. */
+export function schemeBlocks(options: CssOptions = {}): string[] {
+  const root = options.root ?? ":root";
+  const darkSelector = options.darkSelector ?? ".dark";
+  const lightSelector = options.lightSelector ?? ".light";
+  return [
+    block(`${root}${lightSelector}, ${lightSelector}`, ["color-scheme: light;"]),
+    block(`${root}${darkSelector}, ${darkSelector}`, ["color-scheme: dark;"]),
+  ];
+}
+
+/**
  * Complete stylesheet with custom properties for light mode and dark mode.
  *
  * ```css
@@ -93,6 +128,17 @@ export function darkBlocks(lines: string[], options: CssOptions = {}): string[] 
  */
 export function toCss(palette: Palette, options: CssOptions = {}): string {
   const root = options.root ?? ":root";
+  if (options.dark === "light-dark") {
+    if (options.format === "channels") {
+      throw new Error('dark: "light-dark" needs colors, use format "oklch" or "hex".');
+    }
+    const lines = lightDarkDeclarations(
+      declarations(palette, "light", options),
+      declarations(palette, "dark", options),
+    );
+    const parts = [block(root, ["color-scheme: light dark;", ...lines]), ...schemeBlocks(options)];
+    return `${HEADER}\n${parts.join("\n\n")}\n`;
+  }
   const parts = [block(root, declarations(palette, "light", options))];
   parts.push(...darkBlocks(declarations(palette, "dark", options), options));
   return `${HEADER}\n${parts.join("\n\n")}\n`;

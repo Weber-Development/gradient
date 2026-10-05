@@ -20,6 +20,7 @@ The exports write the light values to `:root` and the dark values as overrides. 
 | `both` (default) | `@media (prefers-color-scheme: dark) { :root:not(.light) {…} }` and `:root.dark, .dark {…}` | System setting by default, a theme toggle can force either mode |
 | `media` | `@media (prefers-color-scheme: dark) { :root {…} }` | No toggle |
 | `class` | `:root.dark, .dark {…}` | `next-themes` and similar with the `class` strategy |
+| `light-dark` | one `light-dark(light, dark)` value per variable, `color-scheme` on `:root`, `.dark` and `.light` | The shortest output, for browsers from 2024 on |
 | `none` | light values only | Light-only sites |
 
 Change the class names with `darkSelector` and `lightSelector` (CLI `--dark-selector`), e.g. `[data-theme="dark"]`.
@@ -31,3 +32,17 @@ You do not need it for Gradient colors: the variables switch on their own. If yo
 ```css
 @custom-variant dark (&:where(.dark, .dark *));
 ```
+
+## `light-dark()`
+
+With `dark: "light-dark"` each variable holds both values, and the browser picks one by `color-scheme`:
+
+```css
+:root {
+  color-scheme: light dark;
+  --color-brand-500: light-dark(oklch(67.05% 0.217 28.02), oklch(51.37% 0.2099 27.91));
+}
+:root.dark, .dark { color-scheme: dark; }
+```
+
+It works for CSS variables and Tailwind CSS v4, not for Tailwind v3, which needs bare OKLCH channels.
