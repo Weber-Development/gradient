@@ -1,0 +1,22 @@
+{
+  "sections": [
+    {
+      "label": "Start",
+      "items": ["introduction", "getting-started"]
+    },
+    {
+      "label": "Guides",
+      "items": [
+        "guides/steps",
+        "guides/dark-mode",
+        "guides/tailwind",
+        "guides/css-and-tokens",
+        "guides/cli"
+      ]
+    },
+    {
+      "label": "Reference",
+      "items": ["reference/api"]
+    }
+  ]
+}
