@@ -8,6 +8,7 @@ npx @sweberdev/gradient <color> [name=color ...] [options]
 npx @sweberdev/gradient check <foreground> <background> [--target <ratio>]
 npx @sweberdev/gradient audit <file.css> [...] [--json]
 npx @sweberdev/gradient series <color> [--count <n>] [--format css|json|table]
+npx @sweberdev/gradient blend <color> <color> [...] [--steps <n>] [--angle <deg>] [--format css|json|table]
 ```
 
 Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them in the shell. The first color is named `brand` unless you pass `--name` or `name=color`.
@@ -29,6 +30,8 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 | `--out <file>` | stdout | Write to a file |
 | `--check` | | Print failed contrast checks; exit code `1` if one fails. Also notes colors that look alike with a color vision deficiency |
 | `--target <ratio>` | `4.5` | `check`: contrast the pair needs |
+| `--steps <n>` | `9` | `blend`: number of stops, 2 to 64 |
+| `--angle <deg>` | `90` | `blend`: gradient angle |
 | `--count <n>` | `6` | `series`: number of chart colors, 2 to 8 |
 
 ## Check two colors
@@ -55,3 +58,5 @@ Keep the generated file in the repository and check it in CI when you pin your b
 npx @sweberdev/gradient "#e30613" --pin --check --format tailwind --out app/gradient.css
 git diff --exit-code app/gradient.css
 ```
+
+`gradient blend` prints a gradient between two or more colors, blended in OKLCH. `--format` is `css` (default), `json` or `table`. See [Gradients](gradients.md).

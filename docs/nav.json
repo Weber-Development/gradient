@@ -14,6 +14,8 @@
         "guides/audit",
         "guides/shadcn",
         "guides/chart-colors",
+        "guides/gradients",
+        "guides/image-colors",
         "guides/tailwind",
         "guides/css-and-tokens",
         "guides/cli"
