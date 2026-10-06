@@ -10,6 +10,7 @@
         "guides/steps",
         "guides/dark-mode",
         "guides/status-colors",
+        "guides/check-colors",
         "guides/tailwind",
         "guides/css-and-tokens",
         "guides/cli"

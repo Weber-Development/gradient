@@ -29,6 +29,6 @@ describe("cli", () => {
   });
 
   it("rejects unknown formats", async () => {
-    await expect(main(["#e30613", "--format", "scss"])).rejects.toThrow(/Unknown --format/);
+    await expect(main(["#e30613", "--format", "xml"])).rejects.toThrow(/Unknown --format/);
   });
 });

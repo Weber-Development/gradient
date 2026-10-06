@@ -1,27 +1,32 @@
 import { writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { checkDistinguishable } from "./cvd";
+import { toScss, toTypeScript } from "./export/code";
 import { type DarkMode, toCss } from "./export/css";
 import { toTailwind, toTailwindV3 } from "./export/tailwind";
 import { toJson, toTokens } from "./export/tokens";
+import { checkPair, fixContrast } from "./pair";
 import { checkPalette, createPalette, type Palette } from "./palette";
 import { STEPS } from "./scale";
 
 const HELP = `Usage:
   gradient <color> [name=color ...] [options]
+  gradient check <foreground> <background> [--target <ratio>]
 
 Examples:
   gradient "#e30613"
   gradient "#e30613" accent=#0a84ff --format tailwind --out src/gradient.css
   gradient "oklch(62% 0.2 250)" --format tokens --out tokens.json
+  gradient check "#ffffff" "#e30613"
 
 Options:
   --name <name>          Name of the first color (default: brand)
-  --format <format>      css (default) | tailwind | tailwind3 | tokens | json | table
+  --format <format>      css (default) | tailwind | tailwind3 | scss | ts |
+                         tokens | json | table
   --dark <mode>          both (default) | media | class | light-dark | none
   --dark-selector <sel>  Class that turns dark mode on (default: .dark)
   --hex                  css format: hex values instead of oklch()
-  --prefix <prefix>      css format: variable prefix (default: color)
+  --prefix <prefix>      css and scss: variable prefix (default: color, scss none)
   --status               Add success, warning, danger and info scales
   --no-neutral           Do not add the tinted grey "neutral"
   --neutral-chroma <n>   Chroma of the neutral, 0 for pure grey (default: auto)
@@ -32,6 +37,7 @@ Options:
   --check                Print the contrast checks; exit code 1 if one fails.
                          Also warns about colors that look alike with a
                          color vision deficiency (no effect on the exit code)
+  --target <ratio>       check: contrast the pair needs (default: 4.5)
 
 Every step reaches a fixed contrast: 500 is at least 3:1 on white, 600 at
 least 4.5:1, 800 at least 7:1, in dark mode the same on black.`;
@@ -56,6 +62,7 @@ export async function main(argv: string[]): Promise<number> {
       pin: { type: "boolean" },
       out: { type: "string" },
       check: { type: "boolean" },
+      target: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -63,6 +70,8 @@ export async function main(argv: string[]): Promise<number> {
     console.log(HELP);
     return values.help ? 0 : 2;
   }
+
+  if (positionals[0] === "check") return checkCommand(positionals.slice(1), values.target);
 
   const colors: Record<string, string> = {};
   positionals.forEach((arg, i) => {
@@ -143,6 +152,10 @@ function render(palette: Palette, format: string, o: RenderOptions): string {
       const { css, colors } = toTailwindV3(palette, darkOptions);
       return `${css}\n/* tailwind.config.js → theme.extend.colors:\n${JSON.stringify(colors, null, 2)}\n*/\n`;
     }
+    case "scss":
+      return toScss(palette, o.prefix ? { prefix: o.prefix } : {});
+    case "ts":
+      return toTypeScript(palette);
     case "tokens":
       return `${JSON.stringify(toTokens(palette), null, 2)}\n`;
     case "json":
@@ -152,6 +165,31 @@ function render(palette: Palette, format: string, o: RenderOptions): string {
     default:
       throw new Error(`Unknown --format "${format}".`);
   }
+}
+
+function checkCommand(colors: string[], targetValue: string | undefined): number {
+  const [foreground, background] = colors;
+  if (!foreground || !background || colors.length > 2) {
+    console.error("Usage: gradient check <foreground> <background> [--target <ratio>]");
+    return 2;
+  }
+  const target = targetValue ? number(targetValue) : 4.5;
+  const c = checkPair(foreground, background);
+  const mark = (ok: boolean) => (ok ? "pass" : "fail");
+  console.log(`${c.foreground} on ${c.background}`);
+  console.log(`WCAG 2   ${c.ratio}:1`);
+  console.log(`  text        AA ${mark(c.aa)}   AAA ${mark(c.aaa)}`);
+  console.log(`  large text  AA ${mark(c.aaLarge)}   AAA ${mark(c.aaaLarge)}`);
+  console.log(`  icons, UI   ${mark(c.aaLarge)} (3:1)`);
+  console.log(`APCA     Lc ${c.apca} (WCAG 3 draft, for information)`);
+  if (c.ratio >= target) return 0;
+  const fixed = fixContrast(foreground, background, target);
+  console.log(
+    fixed
+      ? `Needs ${target}:1. Closest color that passes: ${fixed} (${checkPair(fixed, background).ratio}:1, same hue).`
+      : `Needs ${target}:1. No color of this hue reaches it on ${c.background}.`,
+  );
+  return 1;
 }
 
 function table(palette: Palette): string {
