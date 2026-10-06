@@ -26,6 +26,7 @@ Most palette generators interpolate lightness and hope for the best: `blue-500` 
 
 ```ts
 import {
+  auditCss,
   checkDistinguishable,
   checkPair,
   checkPalette,
@@ -48,6 +49,7 @@ checkPalette(palette).every((c) => c.pass); // true
 checkDistinguishable(palette).filter((c) => !c.pass); // pairs that look alike with color blindness
 checkPair("#ffffff", "#e30613"); // { ratio: 4.88, aa: true, apca: -76.5, … }
 fixContrast("#ff5a5f", "#ffffff"); // "#db3742", the closest color that reaches 4.5:1
+auditCss(css); // check the colors of an existing stylesheet
 createSeries("#e30613", { count: 5 }); // chart colors that stay apart with color blindness
 ```
 
@@ -60,6 +62,7 @@ npx @sweberdev/gradient "#e30613" --pin --check       # keep the exact brand col
 npx @sweberdev/gradient check "#ff5a5f" "#ffffff"     # check any pair, suggest a fix
 npx @sweberdev/gradient "#e30613" --format shadcn --out app/globals.css   # shadcn/ui theme
 npx @sweberdev/gradient series "#e30613" --count 5   # chart colors
+npx @sweberdev/gradient audit app/globals.css          # check the colors you already have
 ```
 
 Formats: `css` (default), `tailwind` (v4), `tailwind3`, `scss`, `ts`, `shadcn`, `tokens`, `json`, `table`. Dark mode: `both` (system setting, a `.dark` or `.light` class overrides), `media`, `class`, `light-dark`, `none`. `--status` adds the status colors.

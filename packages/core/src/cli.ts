@@ -1,5 +1,6 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
+import { auditCss } from "./audit";
 import { checkDistinguishable } from "./cvd";
 import { toScss, toTypeScript } from "./export/code";
 import { block, type DarkMode, toCss } from "./export/css";
@@ -14,6 +15,7 @@ import { createSeries } from "./series";
 const HELP = `Usage:
   gradient <color> [name=color ...] [options]
   gradient check <foreground> <background> [--target <ratio>]
+  gradient audit <file.css> [--json]
   gradient series <color> [--count <n>] [--format css|json|table]
 
 Examples:
@@ -23,6 +25,7 @@ Examples:
   gradient check "#ffffff" "#e30613"
   gradient "#e30613" --format shadcn --out app/globals.css
   gradient series "#e30613" --count 5
+  gradient audit app/globals.css
 
 Options:
   --name <name>          Name of the first color (default: brand)
@@ -69,6 +72,7 @@ export async function main(argv: string[]): Promise<number> {
       check: { type: "boolean" },
       target: { type: "string" },
       count: { type: "string" },
+      json: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -77,6 +81,7 @@ export async function main(argv: string[]): Promise<number> {
     return values.help ? 0 : 2;
   }
 
+  if (positionals[0] === "audit") return auditCommand(positionals.slice(1), values.json);
   if (positionals[0] === "series") return seriesCommand(positionals.slice(1), values);
   if (positionals[0] === "check") return checkCommand(positionals.slice(1), values.target);
 
@@ -221,6 +226,46 @@ function seriesCommand(
     `Worst distance ${series.distance}${series.distance >= 0.08 ? "" : ": below 0.08, label the series directly"}.`,
   );
   return 0;
+}
+
+function auditCommand(files: string[], json: boolean | undefined): number {
+  if (files.length === 0) {
+    console.error("Usage: gradient audit <file.css> [...] [--json]");
+    return 2;
+  }
+  let failures = 0;
+  const reports = files.map((file) => ({ file, ...auditCss(readFileSync(file, "utf8")) }));
+  if (json) {
+    process.stdout.write(`${JSON.stringify(reports, null, 2)}\n`);
+    return reports.some((r) => r.checks.some((c) => !c.pass)) ? 1 : 0;
+  }
+  for (const report of reports) {
+    if (report.scales.length === 0) {
+      console.log(`${report.file}: no color steps found (variables like --color-brand-600).`);
+      continue;
+    }
+    console.log(report.file);
+    for (const scale of report.scales) {
+      for (const mode of ["light", "dark"] as const) {
+        const checks = report.checks.filter((c) => c.scale === scale && c.mode === mode);
+        if (checks.length === 0) continue;
+        const failed = checks.filter((c) => !c.pass);
+        failures += failed.length;
+        console.log(
+          `  ${scale} ${mode}: ${checks.length - failed.length}/${checks.length} pairs pass`,
+        );
+        for (const c of failed) {
+          console.log(
+            `    fail ${c.foreground} on ${c.background} = ${c.ratio}:1, needs ${c.required}:1${c.fix ? ` (try ${c.fix})` : ""}`,
+          );
+        }
+      }
+    }
+    if (report.skipped.length > 0) {
+      console.log(`  skipped ${report.skipped.length} variable(s) that are not plain colors`);
+    }
+  }
+  return failures > 0 ? 1 : 0;
 }
 
 function checkCommand(colors: string[], targetValue: string | undefined): number {

@@ -11,6 +11,7 @@
         "guides/dark-mode",
         "guides/status-colors",
         "guides/check-colors",
+        "guides/audit",
         "guides/shadcn",
         "guides/chart-colors",
         "guides/tailwind",

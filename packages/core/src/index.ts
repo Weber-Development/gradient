@@ -1,4 +1,5 @@
 export { apca } from "./apca";
+export { type AuditCheck, type AuditResult, auditCss } from "./audit";
 export {
   formatOklch,
   fromHex,
