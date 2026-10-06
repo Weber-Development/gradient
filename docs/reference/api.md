@@ -49,6 +49,10 @@ interface Swatch {
 
 Measures the [safe pairs](../guides/steps.md#safe-pairs) in both modes. Returns `{ scale, mode, foreground, background, ratio, required, pass }[]`.
 
+### `auditCss(css)`
+
+Checks the color steps of a stylesheet. Returns `{ scales, checks, skipped }`, where `checks` have the shape of `checkPalette` plus `fix`, a color that passes every pair of the step. See [Audit an existing stylesheet](../guides/audit.md).
+
 ### `checkDistinguishable(palette, options?)`
 
 Compares colored scales pairwise at `step` (default 600) with normal vision and simulated color vision deficiencies. Returns `{ a, b, mode, vision, distance, pass }[]`; `minDistance` defaults to 0.08 (ΔE in OKLab). See [Status colors and color vision](../guides/status-colors.md).

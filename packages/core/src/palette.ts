@@ -82,7 +82,7 @@ export interface ContrastCheck {
 }
 
 /** The pairs the step numbers promise, see `CONTRAST_TARGETS`. */
-const PROMISES: Array<[Step, Step | "page", number]> = [
+export const PROMISES: Array<[Step, Step | "page", number]> = [
   [500, "page", 3],
   [500, 50, 3],
   [600, "page", 4.5],

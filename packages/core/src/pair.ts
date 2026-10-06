@@ -53,12 +53,24 @@ export function checkPair(foreground: string, background: string): PairCheck {
  * ```
  */
 export function fixContrast(foreground: string, background: string, target = 4.5): string | null {
+  return fixContrastFor(foreground, [[background, target]]);
+}
+
+/**
+ * Like `fixContrast`, for a color that has to reach a target on several
+ * backgrounds at once: `fixContrastFor("#ca8a04", [["#ffffff", 4.5], ["#fffbeb", 4.5]])`.
+ */
+export function fixContrastFor(
+  foreground: string,
+  requirements: Array<[background: string, target: number]>,
+): string | null {
   const parsed = parseColor(foreground);
   // Greys carry a tiny chroma after parsing; keep them grey.
   const fg = parsed.c < 1e-3 ? { ...parsed, c: 0 } : parsed;
-  const bg = toHex(parseColor(background));
-  if (contrast(toHex(fg), bg) >= target) return toHex(fg);
-  const candidates = [solve(fg, bg, target, 0), solve(fg, bg, target, 1)].filter(
+  const reqs = requirements.map(([bg, target]) => [toHex(parseColor(bg)), target] as const);
+  const passesAll = (hex: string) => reqs.every(([bg, target]) => contrast(hex, bg) >= target);
+  if (passesAll(toHex(fg))) return toHex(fg);
+  const candidates = [solve(fg, passesAll, 0), solve(fg, passesAll, 1)].filter(
     (c): c is Oklch => c !== null,
   );
   if (candidates.length === 0) return null;
@@ -66,20 +78,20 @@ export function fixContrast(foreground: string, background: string, target = 4.5
   return toHex(candidates[0] as Oklch);
 }
 
-/** Moves lightness from `fg.l` towards `end` (0 or 1) until `target` holds. */
-function solve(fg: Oklch, bg: string, target: number, end: 0 | 1): Oklch | null {
+/** Moves lightness from `fg.l` towards `end` (0 or 1) until `passes` holds. */
+function solve(fg: Oklch, passes: (hex: string) => boolean, end: 0 | 1): Oklch | null {
   const at = (l: number) => toGamut({ ...fg, l });
-  const passes = (l: number) => contrast(toHex(at(l)), bg) >= target;
-  if (!passes(end)) return null;
+  const ok = (l: number) => passes(toHex(at(l)));
+  if (!ok(end)) return null;
   let lo = fg.l; // fails
   let hi: number = end; // passes
   for (let i = 0; i < 30; i++) {
     const mid = (lo + hi) / 2;
-    if (passes(mid)) hi = mid;
+    if (ok(mid)) hi = mid;
     else lo = mid;
   }
   // Hex rounding can cost a hair of contrast; step on until it holds.
   let l = hi;
-  for (let i = 0; i < 50 && !passes(l); i++) l += end === 1 ? 0.001 : -0.001;
-  return passes(l) ? at(l) : null;
+  for (let i = 0; i < 50 && !ok(l); i++) l += end === 1 ? 0.001 : -0.001;
+  return ok(l) ? at(l) : null;
 }

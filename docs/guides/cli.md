@@ -6,6 +6,7 @@ description: All options of the gradient command.
 ```sh
 npx @sweberdev/gradient <color> [name=color ...] [options]
 npx @sweberdev/gradient check <foreground> <background> [--target <ratio>]
+npx @sweberdev/gradient audit <file.css> [...] [--json]
 npx @sweberdev/gradient series <color> [--count <n>] [--format css|json|table]
 ```
 
@@ -37,6 +38,10 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 ```sh
 npx @sweberdev/gradient check "#ff5a5f" "#ffffff"
 ```
+
+## Audit a stylesheet
+
+`gradient audit app/globals.css` checks the color steps of an existing stylesheet against the promises and suggests colors that pass. `--json` prints the result. See [Audit an existing stylesheet](audit.md).
 
 ## Chart colors
 
