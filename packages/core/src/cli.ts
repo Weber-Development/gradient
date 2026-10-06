@@ -2,30 +2,35 @@ import { writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { checkDistinguishable } from "./cvd";
 import { toScss, toTypeScript } from "./export/code";
-import { type DarkMode, toCss } from "./export/css";
+import { block, type DarkMode, toCss } from "./export/css";
+import { toShadcn } from "./export/shadcn";
 import { toTailwind, toTailwindV3 } from "./export/tailwind";
 import { toJson, toTokens } from "./export/tokens";
 import { checkPair, fixContrast } from "./pair";
 import { checkPalette, createPalette, type Palette } from "./palette";
 import { STEPS } from "./scale";
+import { createSeries } from "./series";
 
 const HELP = `Usage:
   gradient <color> [name=color ...] [options]
   gradient check <foreground> <background> [--target <ratio>]
+  gradient series <color> [--count <n>] [--format css|json|table]
 
 Examples:
   gradient "#e30613"
   gradient "#e30613" accent=#0a84ff --format tailwind --out src/gradient.css
   gradient "oklch(62% 0.2 250)" --format tokens --out tokens.json
   gradient check "#ffffff" "#e30613"
+  gradient "#e30613" --format shadcn --out app/globals.css
+  gradient series "#e30613" --count 5
 
 Options:
   --name <name>          Name of the first color (default: brand)
   --format <format>      css (default) | tailwind | tailwind3 | scss | ts |
-                         tokens | json | table
+                         shadcn | tokens | json | table
   --dark <mode>          both (default) | media | class | light-dark | none
   --dark-selector <sel>  Class that turns dark mode on (default: .dark)
-  --hex                  css format: hex values instead of oklch()
+  --hex                  css and shadcn: hex values instead of oklch()
   --prefix <prefix>      css and scss: variable prefix (default: color, scss none)
   --status               Add success, warning, danger and info scales
   --no-neutral           Do not add the tinted grey "neutral"
@@ -63,6 +68,7 @@ export async function main(argv: string[]): Promise<number> {
       out: { type: "string" },
       check: { type: "boolean" },
       target: { type: "string" },
+      count: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -71,6 +77,7 @@ export async function main(argv: string[]): Promise<number> {
     return values.help ? 0 : 2;
   }
 
+  if (positionals[0] === "series") return seriesCommand(positionals.slice(1), values);
   if (positionals[0] === "check") return checkCommand(positionals.slice(1), values.target);
 
   const colors: Record<string, string> = {};
@@ -89,12 +96,13 @@ export async function main(argv: string[]): Promise<number> {
     status: values.status,
   });
 
-  const dark = (values.dark ?? "both") as DarkMode;
+  const format = values.format ?? "css";
+  const dark = (values.dark ?? (format === "shadcn" ? "class" : "both")) as DarkMode;
   if (!["both", "media", "class", "light-dark", "none"].includes(dark)) {
     throw new Error(`Unknown --dark "${dark}".`);
   }
   const darkSelector = values["dark-selector"];
-  const output = render(palette, values.format ?? "css", {
+  const output = render(palette, format, {
     dark,
     darkSelector,
     hex: values.hex,
@@ -152,6 +160,8 @@ function render(palette: Palette, format: string, o: RenderOptions): string {
       const { css, colors } = toTailwindV3(palette, darkOptions);
       return `${css}\n/* tailwind.config.js → theme.extend.colors:\n${JSON.stringify(colors, null, 2)}\n*/\n`;
     }
+    case "shadcn":
+      return toShadcn(palette, { ...darkOptions, format: o.hex ? "hex" : "oklch" });
     case "scss":
       return toScss(palette, o.prefix ? { prefix: o.prefix } : {});
     case "ts":
@@ -165,6 +175,52 @@ function render(palette: Palette, format: string, o: RenderOptions): string {
     default:
       throw new Error(`Unknown --format "${format}".`);
   }
+}
+
+function seriesCommand(
+  colors: string[],
+  values: {
+    count?: string;
+    format?: string;
+    dark?: string;
+    "dark-selector"?: string;
+    out?: string;
+  },
+): number {
+  const [color] = colors;
+  if (!color || colors.length > 1) {
+    console.error("Usage: gradient series <color> [--count <n>] [--format css|json|table]");
+    return 2;
+  }
+  const series = createSeries(color, values.count ? { count: number(values.count) } : {});
+  const format = values.format ?? "css";
+  let output: string;
+  if (format === "json") {
+    output = `${JSON.stringify(series, null, 2)}\n`;
+  } else if (format === "table") {
+    output = `${series.light
+      .map((l, i) => `${i + 1}  light ${l}  dark ${series.dark[i]}`)
+      .join("\n")}\nWorst distance ${series.distance} (0.08 and up is clearly distinguishable)\n`;
+  } else if (format === "css") {
+    const lines = (mode: "light" | "dark") =>
+      series[mode].map((hex, i) => `--chart-${i + 1}: ${hex};`);
+    const darkSelector = values["dark-selector"] ?? ".dark";
+    output = `${[block(":root", lines("light")), block(`${darkSelector}`, lines("dark"))].join(
+      "\n\n",
+    )}\n`;
+  } else {
+    throw new Error(`Unknown --format "${format}" for series.`);
+  }
+  if (values.out) {
+    writeFileSync(values.out, output);
+    console.error(`Wrote ${values.out}.`);
+  } else {
+    process.stdout.write(output);
+  }
+  console.error(
+    `Worst distance ${series.distance}${series.distance >= 0.08 ? "" : ": below 0.08, label the series directly"}.`,
+  );
+  return 0;
 }
 
 function checkCommand(colors: string[], targetValue: string | undefined): number {

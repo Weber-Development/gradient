@@ -27,6 +27,7 @@ export {
   type DarkMode,
   toCss,
 } from "./export/css";
+export { type ShadcnOptions, type ShadcnTokens, shadcnTokens, toShadcn } from "./export/shadcn";
 export {
   type TailwindOptions,
   type TailwindV3Output,
@@ -56,4 +57,5 @@ export {
   type Swatch,
   stepsOf,
 } from "./scale";
+export { createSeries, type Series, type SeriesOptions } from "./series";
 export { STATUS_HUES, STATUS_NAMES, type StatusName, statusColors } from "./status";
