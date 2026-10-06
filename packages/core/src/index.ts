@@ -1,3 +1,4 @@
+export { apca } from "./apca";
 export {
   formatOklch,
   fromHex,
@@ -19,6 +20,7 @@ export {
   deltaE,
   simulate,
 } from "./cvd";
+export { type ScssOptions, toScss, toTypeScript } from "./export/code";
 export {
   type ColorFormat,
   type CssOptions,
@@ -32,6 +34,7 @@ export {
   toTailwindV3,
 } from "./export/tailwind";
 export { toJson, toTokens } from "./export/tokens";
+export { checkPair, fixContrast, type PairCheck } from "./pair";
 export {
   type ContrastCheck,
   checkPalette,
