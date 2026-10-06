@@ -25,6 +25,14 @@ From 1.0, Gradient follows semantic versioning. This page says what that covers.
 
 The test suite keeps a snapshot of the exported names and a snapshot of every export format for three reference palettes (a red, a yellow that is hard for contrast and a pinned indigo). A change that alters the public API or a generated file fails the tests until the snapshot is updated on purpose, and the pull request has to say so in its changeset. A sweep over 36 hues, four levels of colorfulness and three lightnesses checks the contrast promises on every run.
 
+## Runtimes and size
+
+CI builds the package and runs a smoke test of the ESM build, the CommonJS build and the command line on Node.js 20, Node.js 22, Bun and Deno. The library uses no Node.js APIs (a test checks that only the command line imports `node:` modules), so it also runs in browsers, edge runtimes and workers.
+
+The whole library is about 10 kB gzipped and a test keeps it under 15 kB. It is tree-shakeable (`sideEffects: false`): importing only `contrast` adds about 1.5 kB.
+
+Test coverage is above 95 % of statements, with a floor in the CI configuration that only goes down on purpose.
+
 ## Support
 
-Each major version gets bug fixes while it is the latest. Gradient runs on Node.js 20 and newer, and in current browsers (it uses no Node.js APIs in the library, only in the CLI).
+Bug fixes go to the latest version of the current major version. Gradient runs on Node.js 20 and newer.

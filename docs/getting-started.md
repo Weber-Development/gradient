@@ -55,5 +55,6 @@ The library also runs in the browser, for example in a theme editor.
 
 ## Requirements
 
-- Node.js 20 or newer for the CLI
+- Node.js 20 or newer for the CLI (Bun and Deno work too, CI tests all of them)
 - Any browser from 2023 on for `oklch()` values; use `--hex` for older ones
+- The library itself has no dependencies and no Node.js APIs. It is about 10 kB gzipped and tree-shakeable, see [Stability](reference/stability.md#runtimes-and-size).

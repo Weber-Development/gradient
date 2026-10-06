@@ -53,7 +53,8 @@ export function extractColors(
   const stride = Math.max(1, Math.floor(total / MAX_PIXELS));
 
   // Histogram over 4 bits per channel.
-  const bins = new Map<number, number>();
+  // Each bin keeps the sum of its real pixels, so a flat color comes out exact.
+  const bins = new Map<number, { count: number; r: number; g: number; b: number }>();
   let counted = 0;
   for (let p = 0; p < total; p += stride) {
     const i = p * 4;
@@ -62,22 +63,21 @@ export function extractColors(
       (((pixels[i] as number) >> SHIFT) << (BITS * 2)) |
       (((pixels[i + 1] as number) >> SHIFT) << BITS) |
       ((pixels[i + 2] as number) >> SHIFT);
-    bins.set(key, (bins.get(key) ?? 0) + 1);
+    const bin = bins.get(key) ?? { count: 0, r: 0, g: 0, b: 0 };
+    bin.count++;
+    bin.r += pixels[i] as number;
+    bin.g += pixels[i + 1] as number;
+    bin.b += pixels[i + 2] as number;
+    bins.set(key, bin);
     counted++;
   }
   if (counted === 0) return [];
 
   const points = [...bins.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .map(([key, weight]) => {
-      const half = 1 << (SHIFT - 1);
-      const channel = (v: number) => ((v << SHIFT) + half) / 255;
-      const rgb = [
-        channel((key >> (BITS * 2)) & ((1 << BITS) - 1)),
-        channel((key >> BITS) & ((1 << BITS) - 1)),
-        channel(key & ((1 << BITS) - 1)),
-      ].map((v) => toLinear(Math.min(1, v))) as LinearRgb;
-      return { lab: toLab(linearToOklch(rgb)), weight };
+    .sort((a, b) => b[1].count - a[1].count || a[0] - b[0])
+    .map(([, bin]) => {
+      const rgb = [bin.r, bin.g, bin.b].map((sum) => toLinear(sum / bin.count / 255)) as LinearRgb;
+      return { lab: toLab(linearToOklch(rgb)), weight: bin.count };
     });
 
   const k = Math.min(count, points.length);
