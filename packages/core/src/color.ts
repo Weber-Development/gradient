@@ -85,6 +85,15 @@ export function toHex(color: Oklch): string {
   return `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+/**
+ * Any supported color (hex, `rgb()`, `hsl()`, `oklch()`) as the six-digit hex
+ * it is displayed as. Out-of-gamut colors are mapped first, so measurements
+ * of the result match what people see.
+ */
+export function asHex(input: string): string {
+  return /^#[0-9a-f]{6}$/i.test(input) ? input : toHex(parseColor(input));
+}
+
 /** Converts a hex color to OKLCH. */
 export function fromHex(hex: string): Oklch {
   const rgb = hexToRgb(hex);

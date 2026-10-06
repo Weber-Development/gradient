@@ -1,4 +1,4 @@
-import { fromHex, type LinearRgb, linearToOklch, toHex, toLinear } from "./color";
+import { asHex, fromHex, type LinearRgb, linearToOklch, toHex, toLinear } from "./color";
 import type { Palette } from "./palette";
 import type { Mode, Step } from "./scale";
 
@@ -26,13 +26,13 @@ const MATRICES: Record<Deficiency, number[][]> = {
 };
 
 function hexToLinear(hex: string): LinearRgb {
-  const v = Number.parseInt(toHex(fromHex(hex)).slice(1), 16);
+  const v = Number.parseInt(asHex(hex).slice(1), 16);
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255].map((c) => toLinear(c / 255)) as LinearRgb;
 }
 
-/** How a color looks to someone with a color vision deficiency, as hex. */
-export function simulate(hex: string, deficiency: Deficiency): string {
-  const rgb = hexToLinear(hex);
+/** How a color (hex, `rgb()`, `hsl()` or `oklch()`) looks to someone with a color vision deficiency, as hex. */
+export function simulate(color: string, deficiency: Deficiency): string {
+  const rgb = hexToLinear(color);
   const m = MATRICES[deficiency];
   const out = m.map((row) =>
     Math.min(
@@ -43,10 +43,10 @@ export function simulate(hex: string, deficiency: Deficiency): string {
   return toHex(linearToOklch(out));
 }
 
-/** Perceptual distance (ΔE in OKLab) between two hex colors. 0.02 is barely visible. */
+/** Perceptual distance (ΔE in OKLab) between two colors. 0.02 is barely visible. */
 export function deltaE(a: string, b: string): number {
   const lab = (hex: string) => {
-    const { l, c, h } = fromHex(hex);
+    const { l, c, h } = fromHex(asHex(hex));
     const rad = (h * Math.PI) / 180;
     return [l, c * Math.cos(rad), c * Math.sin(rad)];
   };

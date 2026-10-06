@@ -1,0 +1,41 @@
+[
+  {
+    "stops": [
+      "#0000ff",
+      "#006dac",
+      "#0087ac",
+      "#00a0af",
+      "#00baae",
+      "#00d5a1",
+      "#19f268",
+      "#b0fa36",
+      "#ffff00"
+    ],
+    "css": "linear-gradient(90deg, #0000ff, #006dac, #0087ac, #00a0af, #00baae, #00d5a1, #19f268, #b0fa36, #ffff00)",
+    "native": "linear-gradient(90deg in oklch, #0000ff, #ffff00)"
+  },
+  {
+    "stops": [
+      "#e30613",
+      "#f6796b",
+      "#ffbeb5",
+      "#ffffff",
+      "#bbd8ff",
+      "#74b0ff",
+      "#0a84ff"
+    ],
+    "css": "linear-gradient(45deg, #e30613, #f6796b, #ffbeb5, #ffffff, #bbd8ff, #74b0ff, #0a84ff)",
+    "native": "linear-gradient(45deg in oklch, #e30613, #ffffff, #0a84ff)"
+  },
+  {
+    "stops": [
+      "#ff0000",
+      "#997600",
+      "#00862d",
+      "#007079",
+      "#0000ff"
+    ],
+    "css": "linear-gradient(90deg, #ff0000, #997600, #00862d, #007079, #0000ff)",
+    "native": "linear-gradient(90deg in oklch, #ff0000, #0000ff)"
+  }
+]

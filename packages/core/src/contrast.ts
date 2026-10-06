@@ -1,11 +1,11 @@
-import { fromHex, luminanceOf } from "./color";
+import { asHex, fromHex, luminanceOf } from "./color";
 
-/** Relative luminance (WCAG 2) of a hex color. */
-export function luminance(hex: string): number {
-  return luminanceOf(fromHex(hex));
+/** Relative luminance (WCAG 2) of a color: hex, `rgb()`, `hsl()` or `oklch()`. */
+export function luminance(color: string): number {
+  return luminanceOf(fromHex(asHex(color)));
 }
 
-/** WCAG 2 contrast ratio between two hex colors, 1–21. */
+/** WCAG 2 contrast ratio between two colors (hex, `rgb()`, `hsl()` or `oklch()`), 1–21. */
 export function contrast(a: string, b: string): number {
   return ratio(luminance(a), luminance(b));
 }

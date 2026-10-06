@@ -59,6 +59,7 @@ export {
   createPalette,
   type Palette,
   type PaletteOptions,
+  PROMISES,
 } from "./palette";
 export {
   anchorStep,
