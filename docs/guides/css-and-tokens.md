@@ -1,6 +1,6 @@
 ---
 title: CSS, tokens and JSON
-description: Export the palette as CSS custom properties, W3C design tokens or plain JSON.
+description: Export the palette as CSS custom properties, W3C design tokens, JSON, Sass or TypeScript.
 ---
 
 ## CSS custom properties
@@ -47,3 +47,26 @@ The file follows the W3C Design Tokens format and works with Tokens Studio for F
 ## JSON
 
 `--format json` or `toJson(palette)` gives plain hex values: `{ "brand": { "light": { "50": "#fff6f5", … }, "dark": { … } } }`.
+
+## Sass
+
+```sh
+npx @sweberdev/gradient "#e30613" --format scss --out _colors.scss
+```
+
+Light values are `$brand-600`, dark values `$brand-600-dark`, text colors `$brand-on-600`. Sass variables are fixed at build time, so dark mode needs your own selectors or media queries. Prefer CSS custom properties when you can.
+
+## TypeScript
+
+```sh
+npx @sweberdev/gradient "#e30613" --format ts --out src/colors.ts
+```
+
+```ts
+import { colors } from "./colors";
+
+colors.brand.light[600]; // "#e20211"
+colors.brand.light.on[600]; // "#ffffff"
+```
+
+For CSS-in-JS, React Native, canvas or charts. `ColorName` and `ColorStep` are exported as types.
