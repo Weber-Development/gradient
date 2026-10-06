@@ -43,7 +43,7 @@ interface Swatch {
 }
 ```
 
-`STEPS` lists the steps (`50` … `950`), `CONTRAST_TARGETS` their targets.
+`STEPS` lists the steps (`50` … `950`), `CONTRAST_TARGETS` their targets. `stepsOf(scale, mode)` returns the steps of one mode as `[step, swatch]` pairs, lightest first in light mode.
 
 ### `PROMISES`
 
@@ -122,3 +122,6 @@ The best brand color of an `extractColors` result as hex, or `null` if there is 
 | `simulate(color, deficiency)` | Color as seen with `protanopia`, `deuteranopia` or `tritanopia` |
 | `deltaE(a, b)` | Perceptual distance in OKLab |
 | `statusColors(brand)` | The derived status colors as `oklch()` strings |
+| `STATUS_NAMES`, `STATUS_HUES` | The status names (`success`, `warning`, `danger`, `info`) and their fixed hues |
+| `DEFICIENCIES` | `protanopia`, `deuteranopia`, `tritanopia`, the values `simulate` accepts |
+| `CONFIG_FORMATS` | The output formats a `gradient.config.json` accepts |

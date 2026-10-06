@@ -22,5 +22,39 @@ jobs:
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm -r --filter './packages/**' run coverage
       - run: pnpm check:packages
+
+  # The built package must load and run on every runtime it claims to support.
+  runtimes:
+    runs-on: ubuntu-latest
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [node20, node22, bun, deno]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - if: matrix.runtime == 'node20'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - if: matrix.runtime == 'bun'
+        uses: oven-sh/setup-bun@v2
+      - if: matrix.runtime == 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: node packages/core/scripts/smoke.mjs
+        if: startsWith(matrix.runtime, 'node')
+      - run: bun packages/core/scripts/smoke.mjs
+        if: matrix.runtime == 'bun'
+      - run: deno run -A packages/core/scripts/smoke.mjs
+        if: matrix.runtime == 'deno'

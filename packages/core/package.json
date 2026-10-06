@@ -60,10 +60,14 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "5.0.3",
+    "esbuild": "^0.27.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.0",
     "vitest": "^5.0.3"
