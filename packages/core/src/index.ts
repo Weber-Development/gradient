@@ -1,6 +1,13 @@
 export { apca } from "./apca";
 export { type AuditCheck, type AuditResult, auditCss } from "./audit";
 export {
+  type Blend,
+  type BlendContrast,
+  type BlendOptions,
+  contrastOnBlend,
+  createBlend,
+} from "./blend";
+export {
   formatOklch,
   fromHex,
   inGamut,
@@ -36,6 +43,7 @@ export {
   toTailwindV3,
 } from "./export/tailwind";
 export { toJson, toTokens } from "./export/tokens";
+export { type ExtractedColor, type ExtractOptions, extractColors, pickBrand } from "./extract";
 export { checkPair, fixContrast, type PairCheck } from "./pair";
 export {
   type ContrastCheck,

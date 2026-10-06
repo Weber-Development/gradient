@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { auditCss } from "./audit";
+import { createBlend } from "./blend";
 import { checkDistinguishable } from "./cvd";
 import { toScss, toTypeScript } from "./export/code";
 import { block, type DarkMode, toCss } from "./export/css";
@@ -17,6 +18,7 @@ const HELP = `Usage:
   gradient check <foreground> <background> [--target <ratio>]
   gradient audit <file.css> [--json]
   gradient series <color> [--count <n>] [--format css|json|table]
+  gradient blend <color> <color> [...] [--steps <n>] [--angle <deg>] [--format css|json|table]
 
 Examples:
   gradient "#e30613"
@@ -26,6 +28,7 @@ Examples:
   gradient "#e30613" --format shadcn --out app/globals.css
   gradient series "#e30613" --count 5
   gradient audit app/globals.css
+  gradient blend "#e30613" "#0a84ff" --steps 7
 
 Options:
   --name <name>          Name of the first color (default: brand)
@@ -72,6 +75,8 @@ export async function main(argv: string[]): Promise<number> {
       check: { type: "boolean" },
       target: { type: "string" },
       count: { type: "string" },
+      steps: { type: "string" },
+      angle: { type: "string" },
       json: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
@@ -83,6 +88,7 @@ export async function main(argv: string[]): Promise<number> {
 
   if (positionals[0] === "audit") return auditCommand(positionals.slice(1), values.json);
   if (positionals[0] === "series") return seriesCommand(positionals.slice(1), values);
+  if (positionals[0] === "blend") return blendCommand(positionals.slice(1), values);
   if (positionals[0] === "check") return checkCommand(positionals.slice(1), values.target);
 
   const colors: Record<string, string> = {};
@@ -225,6 +231,36 @@ function seriesCommand(
   console.error(
     `Worst distance ${series.distance}${series.distance >= 0.08 ? "" : ": below 0.08, label the series directly"}.`,
   );
+  return 0;
+}
+
+function blendCommand(
+  colors: string[],
+  values: { steps?: string; angle?: string; format?: string; out?: string },
+): number {
+  if (colors.length < 2) {
+    console.error(
+      "Usage: gradient blend <color> <color> [...] [--steps <n>] [--angle <deg>] [--format css|json|table]",
+    );
+    return 2;
+  }
+  const blend = createBlend(colors, {
+    ...(values.steps ? { steps: number(values.steps) } : {}),
+    ...(values.angle ? { angle: number(values.angle) } : {}),
+  });
+  const format = values.format ?? "css";
+  let output: string;
+  if (format === "json") output = `${JSON.stringify(blend, null, 2)}\n`;
+  else if (format === "table") output = `${blend.stops.join("\n")}\n`;
+  else if (format === "css")
+    output = `background: ${blend.css};\n/* or, in current browsers: */\nbackground: ${blend.native};\n`;
+  else throw new Error(`Unknown --format "${format}" for blend.`);
+  if (values.out) {
+    writeFileSync(values.out, output);
+    console.error(`Wrote ${values.out}.`);
+  } else {
+    process.stdout.write(output);
+  }
   return 0;
 }
 

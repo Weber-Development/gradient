@@ -69,6 +69,22 @@ The closest color to `foreground`, with only its lightness changed, that reaches
 
 Chart colors: `{ light, dark, distance }` with `count` hex colors (2 to 8, default 6) per mode. See [Chart colors](../guides/chart-colors.md).
 
+### `createBlend(colors, options?)`
+
+Gradient between two or more colors, blended in OKLCH: `{ stops, css, native }`. Options `steps` (2 to 64, default 9), `angle` (default 90) and `hue` (`"shorter"` or `"longer"`). See [Gradients](../guides/gradients.md).
+
+### `contrastOnBlend(blend, text, required?)`
+
+Contrast of a text color on every stop: `{ min, max, pass, required }`. `required` defaults to 4.5.
+
+### `extractColors(pixels, options?)`
+
+Dominant colors of an RGBA pixel array: `{ hex, share }[]`, sorted by share. `count` is 1 to 12, default 5. See [Colors from an image](../guides/image-colors.md).
+
+### `pickBrand(colors)`
+
+The best brand color of an `extractColors` result as hex, or `null` if there is none.
+
 ## Exports
 
 | Function | Returns |
