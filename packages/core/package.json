@@ -1,6 +1,6 @@
 {
   "name": "@sweberdev/gradient",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Accessible OKLCH color scales from one brand color. Contrast built into the step numbers, dark mode included, export for CSS, Tailwind v3/v4 and design tokens. Zero dependencies.",
   "license": "MIT",
   "author": "Seya Weber (https://github.com/sxwxbxr)",
