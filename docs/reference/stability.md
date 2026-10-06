@@ -3,7 +3,7 @@ title: Stability
 description: What stays the same within a major version of Gradient, and how the tests enforce it.
 ---
 
-From 1.0, Gradient follows semantic versioning. This page says what that covers.
+Gradient 1.0 is the first stable release, and from here it follows semantic versioning. This page says what that covers.
 
 ## What is stable
 
