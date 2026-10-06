@@ -18,6 +18,8 @@
         "guides/image-colors",
         "guides/tailwind",
         "guides/css-and-tokens",
+        "guides/config-file",
+        "guides/github-action",
         "guides/cli"
       ]
     },

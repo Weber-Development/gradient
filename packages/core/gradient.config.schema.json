@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unpkg.com/@sweberdev/gradient/gradient.config.schema.json",
+  "title": "gradient.config.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["colors", "outputs"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "colors": {
+      "type": "object",
+      "description": "Named colors. The first one is the brand color.",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string" }
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "boolean",
+          "description": "Add success, warning, danger and info scales."
+        },
+        "pin": {
+          "type": "boolean",
+          "description": "Put the exact input color on its closest step."
+        },
+        "neutral": {
+          "type": ["boolean", "number"],
+          "description": "Tinted grey: true, false or its chroma."
+        },
+        "saturation": { "type": "number", "description": "Multiply the chroma of all steps." },
+        "hueShift": {
+          "type": "number",
+          "description": "Turn the hue from the lightest to the darkest step, in degrees."
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "format"],
+        "properties": {
+          "file": { "type": "string", "description": "Path relative to this file." },
+          "format": {
+            "enum": [
+              "css",
+              "tailwind",
+              "tailwind3",
+              "scss",
+              "ts",
+              "shadcn",
+              "tokens",
+              "json",
+              "table",
+              "series"
+            ]
+          },
+          "dark": { "enum": ["both", "media", "class", "light-dark", "none"] },
+          "darkSelector": { "type": "string" },
+          "hex": { "type": "boolean" },
+          "prefix": { "type": "string" },
+          "count": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 8,
+            "description": "series: number of chart colors."
+          }
+        }
+      }
+    },
+    "audit": {
+      "type": "array",
+      "description": "Existing stylesheets to audit.",
+      "items": { "type": "string" }
+    }
+  }
+}

@@ -37,6 +37,7 @@
   "files": [
     "dist",
     "src",
+    "gradient.config.schema.json",
     "README.md",
     "LICENSE"
   ],

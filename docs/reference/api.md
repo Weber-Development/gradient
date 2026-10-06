@@ -85,6 +85,10 @@ Dominant colors of an RGBA pixel array: `{ hex, share }[]`, sorted by share. `co
 
 The best brand color of an `extractColors` result as hex, or `null` if there is none.
 
+### `parseConfig(input)` and `renderConfig(config)`
+
+`parseConfig` validates a parsed `gradient.config.json` and returns it typed, or throws an error that names the field. `renderConfig` generates every file of it without touching the file system: `{ outputs: [{ file, content }], checks }`. See [Config file and build](../guides/config-file.md).
+
 ## Exports
 
 | Function | Returns |
