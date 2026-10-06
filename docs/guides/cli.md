@@ -8,6 +8,8 @@ npx @sweberdev/gradient <color> [name=color ...] [options]
 npx @sweberdev/gradient check <foreground> <background> [--target <ratio>]
 npx @sweberdev/gradient audit <file.css> [...] [--json]
 npx @sweberdev/gradient series <color> [--count <n>] [--format css|json|table]
+npx @sweberdev/gradient build [--config <file>] [--verify] [--json] [--markdown]
+npx @sweberdev/gradient init <color> [name=color ...] [--format <format>] [--out <file>]
 npx @sweberdev/gradient blend <color> <color> [...] [--steps <n>] [--angle <deg>] [--format css|json|table]
 ```
 
@@ -32,6 +34,9 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 | `--target <ratio>` | `4.5` | `check`: contrast the pair needs |
 | `--steps <n>` | `9` | `blend`: number of stops, 2 to 64 |
 | `--angle <deg>` | `90` | `blend`: gradient angle |
+| `--config <file>` | `gradient.config.json` | `build`, `init`: config file |
+| `--verify` | off | `build`: write nothing, exit code 1 if a file is out of date |
+| `--markdown` | off | `build`, `audit`: Markdown report |
 | `--count <n>` | `6` | `series`: number of chart colors, 2 to 8 |
 
 ## Check two colors
@@ -60,3 +65,5 @@ git diff --exit-code app/gradient.css
 ```
 
 `gradient blend` prints a gradient between two or more colors, blended in OKLCH. `--format` is `css` (default), `json` or `table`. See [Gradients](gradients.md).
+
+`gradient build` generates all files of a `gradient.config.json`, `gradient init` writes a starter one. See [Config file and build](config-file.md) and [GitHub Action](github-action.md).

@@ -1,22 +1,22 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { auditCss } from "./audit";
 import { createBlend } from "./blend";
+import { type GradientConfig, parseConfig, renderConfig } from "./config";
 import { checkDistinguishable } from "./cvd";
-import { toScss, toTypeScript } from "./export/code";
-import { block, type DarkMode, toCss } from "./export/css";
-import { toShadcn } from "./export/shadcn";
-import { toTailwind, toTailwindV3 } from "./export/tailwind";
-import { toJson, toTokens } from "./export/tokens";
+import type { DarkMode } from "./export/css";
 import { checkPair, fixContrast } from "./pair";
-import { checkPalette, createPalette, type Palette } from "./palette";
-import { STEPS } from "./scale";
+import { checkPalette, createPalette } from "./palette";
+import { render, seriesCss } from "./render";
 import { createSeries } from "./series";
 
 const HELP = `Usage:
   gradient <color> [name=color ...] [options]
   gradient check <foreground> <background> [--target <ratio>]
-  gradient audit <file.css> [--json]
+  gradient audit <file.css> [--json] [--markdown]
+  gradient build [--config <file>] [--verify] [--json] [--markdown]
+  gradient init <color> [--format <format>] [--out <file>]
   gradient series <color> [--count <n>] [--format css|json|table]
   gradient blend <color> <color> [...] [--steps <n>] [--angle <deg>] [--format css|json|table]
 
@@ -28,6 +28,9 @@ Examples:
   gradient "#e30613" --format shadcn --out app/globals.css
   gradient series "#e30613" --count 5
   gradient audit app/globals.css
+  gradient init "#e30613" --format shadcn --out app/globals.css
+  gradient build
+  gradient build --verify
   gradient blend "#e30613" "#0a84ff" --steps 7
 
 Options:
@@ -49,6 +52,9 @@ Options:
                          Also warns about colors that look alike with a
                          color vision deficiency (no effect on the exit code)
   --target <ratio>       check: contrast the pair needs (default: 4.5)
+  --config <file>        build: config file (default: gradient.config.json)
+  --verify               build: write nothing, exit code 1 if a file is out of date
+  --markdown             build and audit: print a Markdown report
 
 Every step reaches a fixed contrast: 500 is at least 3:1 on white, 600 at
 least 4.5:1, 800 at least 7:1, in dark mode the same on black.`;
@@ -78,6 +84,9 @@ export async function main(argv: string[]): Promise<number> {
       steps: { type: "string" },
       angle: { type: "string" },
       json: { type: "boolean" },
+      config: { type: "string" },
+      verify: { type: "boolean" },
+      markdown: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -86,7 +95,9 @@ export async function main(argv: string[]): Promise<number> {
     return values.help ? 0 : 2;
   }
 
-  if (positionals[0] === "audit") return auditCommand(positionals.slice(1), values.json);
+  if (positionals[0] === "audit") return auditCommand(positionals.slice(1), values);
+  if (positionals[0] === "build") return buildCommand(values);
+  if (positionals[0] === "init") return initCommand(positionals.slice(1), values);
   if (positionals[0] === "series") return seriesCommand(positionals.slice(1), values);
   if (positionals[0] === "blend") return blendCommand(positionals.slice(1), values);
   if (positionals[0] === "check") return checkCommand(positionals.slice(1), values.target);
@@ -149,45 +160,6 @@ export async function main(argv: string[]): Promise<number> {
   return 0;
 }
 
-interface RenderOptions {
-  dark: DarkMode;
-  darkSelector: string | undefined;
-  hex: boolean | undefined;
-  prefix: string | undefined;
-}
-
-function render(palette: Palette, format: string, o: RenderOptions): string {
-  const darkOptions = { dark: o.dark, ...(o.darkSelector ? { darkSelector: o.darkSelector } : {}) };
-  switch (format) {
-    case "css":
-      return toCss(palette, {
-        ...darkOptions,
-        format: o.hex ? "hex" : "oklch",
-        ...(o.prefix ? { prefix: o.prefix } : {}),
-      });
-    case "tailwind":
-      return toTailwind(palette, darkOptions);
-    case "tailwind3": {
-      const { css, colors } = toTailwindV3(palette, darkOptions);
-      return `${css}\n/* tailwind.config.js → theme.extend.colors:\n${JSON.stringify(colors, null, 2)}\n*/\n`;
-    }
-    case "shadcn":
-      return toShadcn(palette, { ...darkOptions, format: o.hex ? "hex" : "oklch" });
-    case "scss":
-      return toScss(palette, o.prefix ? { prefix: o.prefix } : {});
-    case "ts":
-      return toTypeScript(palette);
-    case "tokens":
-      return `${JSON.stringify(toTokens(palette), null, 2)}\n`;
-    case "json":
-      return `${JSON.stringify(toJson(palette), null, 2)}\n`;
-    case "table":
-      return table(palette);
-    default:
-      throw new Error(`Unknown --format "${format}".`);
-  }
-}
-
 function seriesCommand(
   colors: string[],
   values: {
@@ -213,12 +185,11 @@ function seriesCommand(
       .map((l, i) => `${i + 1}  light ${l}  dark ${series.dark[i]}`)
       .join("\n")}\nWorst distance ${series.distance} (0.08 and up is clearly distinguishable)\n`;
   } else if (format === "css") {
-    const lines = (mode: "light" | "dark") =>
-      series[mode].map((hex, i) => `--chart-${i + 1}: ${hex};`);
-    const darkSelector = values["dark-selector"] ?? ".dark";
-    output = `${[block(":root", lines("light")), block(`${darkSelector}`, lines("dark"))].join(
-      "\n\n",
-    )}\n`;
+    output = seriesCss(
+      color,
+      values.count ? number(values.count) : undefined,
+      values["dark-selector"],
+    ).css;
   } else {
     throw new Error(`Unknown --format "${format}" for series.`);
   }
@@ -264,17 +235,26 @@ function blendCommand(
   return 0;
 }
 
-function auditCommand(files: string[], json: boolean | undefined): number {
+type AuditReport = { file: string } & ReturnType<typeof auditCss>;
+
+function auditCommand(files: string[], values: { json?: boolean; markdown?: boolean }): number {
   if (files.length === 0) {
-    console.error("Usage: gradient audit <file.css> [...] [--json]");
+    console.error("Usage: gradient audit <file.css> [...] [--json] [--markdown]");
     return 2;
   }
-  let failures = 0;
   const reports = files.map((file) => ({ file, ...auditCss(readFileSync(file, "utf8")) }));
-  if (json) {
+  const failures = reports.reduce((n, r) => n + r.checks.filter((c) => !c.pass).length, 0);
+  if (values.json) {
     process.stdout.write(`${JSON.stringify(reports, null, 2)}\n`);
-    return reports.some((r) => r.checks.some((c) => !c.pass)) ? 1 : 0;
+  } else if (values.markdown) {
+    process.stdout.write(`${auditMarkdown(reports)}\n`);
+  } else {
+    printAudit(reports);
   }
+  return failures > 0 ? 1 : 0;
+}
+
+function printAudit(reports: AuditReport[]) {
   for (const report of reports) {
     if (report.scales.length === 0) {
       console.log(`${report.file}: no color steps found (variables like --color-brand-600).`);
@@ -286,7 +266,6 @@ function auditCommand(files: string[], json: boolean | undefined): number {
         const checks = report.checks.filter((c) => c.scale === scale && c.mode === mode);
         if (checks.length === 0) continue;
         const failed = checks.filter((c) => !c.pass);
-        failures += failed.length;
         console.log(
           `  ${scale} ${mode}: ${checks.length - failed.length}/${checks.length} pairs pass`,
         );
@@ -301,7 +280,148 @@ function auditCommand(files: string[], json: boolean | undefined): number {
       console.log(`  skipped ${report.skipped.length} variable(s) that are not plain colors`);
     }
   }
-  return failures > 0 ? 1 : 0;
+}
+
+function auditMarkdown(reports: AuditReport[]): string {
+  const lines: string[] = [];
+  for (const report of reports) {
+    const failed = report.checks.filter((c) => !c.pass);
+    if (report.scales.length === 0) {
+      lines.push(`- \`${report.file}\`: no color steps found.`);
+    } else if (failed.length === 0) {
+      lines.push(`- \`${report.file}\`: all ${report.checks.length} pairs pass.`);
+    } else {
+      lines.push(
+        `- \`${report.file}\`: ${failed.length} of ${report.checks.length} pairs fail.`,
+        "",
+        "  | Scale | Mode | Pair | Ratio | Needs | Try |",
+        "  |---|---|---|---|---|---|",
+        ...failed.map(
+          (c) =>
+            `  | ${c.scale} | ${c.mode} | ${c.foreground} on ${c.background} | ${c.ratio}:1 | ${c.required}:1 | ${c.fix ? `\`${c.fix}\`` : "-"} |`,
+        ),
+        "",
+      );
+    }
+  }
+  return lines.join("\n");
+}
+
+function readConfig(path: string): GradientConfig {
+  if (!existsSync(path)) {
+    throw new Error(`${path} not found. Create one with: gradient init <color>`);
+  }
+  try {
+    return parseConfig(JSON.parse(readFileSync(path, "utf8")));
+  } catch (error) {
+    if (error instanceof SyntaxError)
+      throw new Error(`${path} is not valid JSON: ${error.message}`);
+    throw error;
+  }
+}
+
+type OutputStatus = "written" | "unchanged" | "stale" | "missing";
+
+function buildCommand(values: {
+  config?: string;
+  verify?: boolean;
+  json?: boolean;
+  markdown?: boolean;
+}): number {
+  const configPath = resolve(values.config ?? "gradient.config.json");
+  const config = readConfig(configPath);
+  const base = dirname(configPath);
+  const result = renderConfig(config);
+
+  const outputs = result.outputs.map((o) => {
+    const path = resolve(base, o.file);
+    const current = existsSync(path) ? readFileSync(path, "utf8") : undefined;
+    let status: OutputStatus;
+    if (current === o.content) status = "unchanged";
+    else if (values.verify) status = current === undefined ? "missing" : "stale";
+    else {
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, o.content);
+      status = "written";
+    }
+    return { file: o.file, status };
+  });
+  const failedChecks = result.checks.filter((c) => !c.pass);
+  const audits = (config.audit ?? []).map((file) => ({
+    file,
+    ...auditCss(readFileSync(resolve(base, file), "utf8")),
+  }));
+  const auditFailures = audits.reduce((n, r) => n + r.checks.filter((c) => !c.pass).length, 0);
+  const outOfDate = outputs.filter((o) => o.status === "stale" || o.status === "missing");
+  const ok = outOfDate.length === 0 && failedChecks.length === 0 && auditFailures === 0;
+
+  if (values.json) {
+    process.stdout.write(
+      `${JSON.stringify({ ok, outputs, checks: { total: result.checks.length, failed: failedChecks }, audit: audits }, null, 2)}\n`,
+    );
+  } else if (values.markdown) {
+    const lines = [
+      "| File | Status |",
+      "|---|---|",
+      ...outputs.map((o) => `| \`${o.file}\` | ${o.status} |`),
+      "",
+      failedChecks.length === 0
+        ? `Contrast promises: all ${result.checks.length} checks pass.`
+        : `Contrast promises: ${failedChecks.length} of ${result.checks.length} checks fail.`,
+    ];
+    if (outOfDate.length > 0) {
+      lines.push("", "Run `npx @sweberdev/gradient build` and commit the changed files.");
+    }
+    if (audits.length > 0) lines.push("", auditMarkdown(audits));
+    process.stdout.write(`${lines.join("\n")}\n`);
+  } else {
+    for (const o of outputs) console.log(`${o.status.padEnd(9)} ${o.file}`);
+    for (const c of failedChecks) {
+      console.log(
+        `fail ${c.scale} ${c.mode}: ${c.foreground} on ${c.background} = ${c.ratio}:1, needs ${c.required}:1`,
+      );
+    }
+    console.log(
+      `${result.checks.length - failedChecks.length}/${result.checks.length} contrast checks passed.`,
+    );
+    printAudit(audits);
+    if (outOfDate.length > 0) {
+      console.error("Files are out of date. Run `gradient build` and commit the result.");
+    }
+  }
+  return ok ? 0 : 1;
+}
+
+function initCommand(
+  colors: string[],
+  values: { format?: string; out?: string; status?: boolean; config?: string },
+): number {
+  if (colors.length === 0) {
+    console.error(
+      "Usage: gradient init <color> [name=color ...] [--format <format>] [--out <file>]",
+    );
+    return 2;
+  }
+  const path = resolve(values.config ?? "gradient.config.json");
+  if (existsSync(path)) {
+    console.error(`${path} already exists.`);
+    return 1;
+  }
+  const named: Record<string, string> = {};
+  colors.forEach((arg, i) => {
+    const eq = arg.indexOf("=");
+    if (eq > 0 && !arg.startsWith("#")) named[arg.slice(0, eq)] = arg.slice(eq + 1);
+    else named[i === 0 ? "brand" : `color${i + 1}`] = arg;
+  });
+  const config = parseConfig({
+    colors: named,
+    ...(values.status ? { palette: { status: true } } : {}),
+    outputs: [{ file: values.out ?? "src/gradient.css", format: values.format ?? "tailwind" }],
+  });
+  renderConfig(config);
+  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`);
+  console.error(`Wrote ${path}. Generate the files with: gradient build`);
+  return 0;
 }
 
 function checkCommand(colors: string[], targetValue: string | undefined): number {
@@ -327,23 +447,6 @@ function checkCommand(colors: string[], targetValue: string | undefined): number
       : `Needs ${target}:1. No color of this hue reaches it on ${c.background}.`,
   );
   return 1;
-}
-
-function table(palette: Palette): string {
-  const lines: string[] = [];
-  for (const scale of palette.scales) {
-    lines.push(`${scale.name} (from ${scale.source}, closest step ${scale.anchor})`);
-    lines.push("step   light    contrast   dark     contrast");
-    for (const step of STEPS) {
-      const l = scale.light[step];
-      const d = scale.dark[step];
-      lines.push(
-        `${String(step).padEnd(6)} ${l.hex}  ${l.contrast.toFixed(2).padStart(5)}:1   ${d.hex}  ${d.contrast.toFixed(2).padStart(5)}:1`,
-      );
-    }
-    lines.push("");
-  }
-  return `${lines.join("\n")}\n`;
 }
 
 function number(value: string): number {

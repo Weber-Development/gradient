@@ -64,6 +64,8 @@ npx @sweberdev/gradient "#e30613" --format shadcn --out app/globals.css   # shad
 npx @sweberdev/gradient series "#e30613" --count 5   # chart colors
 npx @sweberdev/gradient audit app/globals.css          # check the colors you already have
 npx @sweberdev/gradient blend "#e30613" "#0a84ff"      # gradient without the muddy middle
+npx @sweberdev/gradient init "#e30613"                 # gradient.config.json, then:
+npx @sweberdev/gradient build --verify                 # regenerate or verify all files (CI)
 ```
 
 Formats: `css` (default), `tailwind` (v4), `tailwind3`, `scss`, `ts`, `shadcn`, `tokens`, `json`, `table`. Dark mode: `both` (system setting, a `.dark` or `.light` class overrides), `media`, `class`, `light-dark`, `none`. `--status` adds the status colors.

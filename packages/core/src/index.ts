@@ -18,6 +18,14 @@ export {
   toGamut,
   toHex,
 } from "./color";
+export type {
+  ConfigFormat,
+  ConfigOutput,
+  ConfigResult,
+  GradientConfig,
+  RenderedOutput,
+} from "./config";
+export { CONFIG_FORMATS, parseConfig, renderConfig } from "./config";
 export { contrast, luminance, wcagLevel } from "./contrast";
 export {
   checkDistinguishable,
