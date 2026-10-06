@@ -20,12 +20,15 @@
         "guides/css-and-tokens",
         "guides/config-file",
         "guides/github-action",
-        "guides/cli"
+        "guides/cli",
+        "guides/recipes",
+        "guides/wcag",
+        "guides/migration"
       ]
     },
     {
       "label": "Reference",
-      "items": ["reference/api"]
+      "items": ["reference/api", "reference/stability"]
     }
   ]
 }

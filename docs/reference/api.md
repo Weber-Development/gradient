@@ -3,7 +3,7 @@ title: API
 description: Functions and types of @sweberdev/gradient.
 ---
 
-All functions are pure and run in Node.js and in the browser.
+All functions are pure and run in Node.js and in the browser. Wherever a color is expected you can pass hex, `rgb()`, `hsl()` or `oklch()`. What is stable between versions is described in [Stability](stability.md).
 
 ## Palettes
 
@@ -44,6 +44,10 @@ interface Swatch {
 ```
 
 `STEPS` lists the steps (`50` … `950`), `CONTRAST_TARGETS` their targets.
+
+### `PROMISES`
+
+The contrast promises as a list of `[step, background, ratio]`, the same ones `checkPalette` measures and [Stability](stability.md) guarantees.
 
 ### `checkPalette(palette)`
 
@@ -111,10 +115,10 @@ The best brand color of an `extractColors` result as hex, or `null` if there is 
 | `toHex(color)`, `fromHex(hex)` | Convert, with gamut mapping |
 | `formatOklch(color)`, `oklchChannels(color)` | CSS strings |
 | `inGamut(color)`, `toGamut(color)`, `maxChroma(l, h)` | sRGB gamut |
-| `contrast(a, b)`, `luminance(hex)` | WCAG 2 contrast ratio and relative luminance |
+| `contrast(a, b)`, `luminance(color)` | WCAG 2 contrast ratio and relative luminance |
 | `wcagLevel(ratio, large?)` | `"AAA"`, `"AA"` or `"fail"` |
 | `apca(text, background)` | APCA lightness contrast Lc (WCAG 3 draft) |
 | `anchorStep(color)` | Step closest to a color |
-| `simulate(hex, deficiency)` | Color as seen with `protanopia`, `deuteranopia` or `tritanopia` |
+| `simulate(color, deficiency)` | Color as seen with `protanopia`, `deuteranopia` or `tritanopia` |
 | `deltaE(a, b)` | Perceptual distance in OKLab |
 | `statusColors(brand)` | The derived status colors as `oklch()` strings |
