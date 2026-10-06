@@ -61,6 +61,10 @@ WCAG 2 ratio and levels plus APCA for any two colors. Returns `{ foreground, bac
 
 The closest color to `foreground`, with only its lightness changed, that reaches `target` (default 4.5) on `background`. Returns the input if it already passes and `null` if no lightness gets there.
 
+### `createSeries(brand, options?)`
+
+Chart colors: `{ light, dark, distance }` with `count` hex colors (2 to 8, default 6) per mode. See [Chart colors](../guides/chart-colors.md).
+
 ## Exports
 
 | Function | Returns |
@@ -70,6 +74,8 @@ The closest color to `foreground`, with only its lightness changed, that reaches
 | `toTailwindV3(palette, options?)` | `{ css, colors }` |
 | `toScss(palette, options?)` | Sass variables: `$brand-600`, `$brand-600-dark`, `$brand-on-600`; `prefix` option |
 | `toTypeScript(palette)` | TypeScript module with a typed `colors` constant |
+| `toShadcn(palette, options?)` | Stylesheet with the semantic colors of shadcn/ui, see [shadcn/ui theme](../guides/shadcn.md) |
+| `shadcnTokens(palette)` | The same colors as hex per mode |
 | `toTokens(palette)` | W3C design tokens object |
 | `toJson(palette)` | Plain hex values |
 

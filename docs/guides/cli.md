@@ -6,6 +6,7 @@ description: All options of the gradient command.
 ```sh
 npx @sweberdev/gradient <color> [name=color ...] [options]
 npx @sweberdev/gradient check <foreground> <background> [--target <ratio>]
+npx @sweberdev/gradient series <color> [--count <n>] [--format css|json|table]
 ```
 
 Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them in the shell. The first color is named `brand` unless you pass `--name` or `name=color`.
@@ -13,10 +14,10 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 | Option | Default | |
 |---|---|---|
 | `--name <name>` | `brand` | Name of the first color |
-| `--format <format>` | `css` | `css`, `tailwind` (v4), `tailwind3`, `scss`, `ts`, `tokens`, `json`, `table` |
+| `--format <format>` | `css` | `css`, `tailwind` (v4), `tailwind3`, `scss`, `ts`, `shadcn`, `tokens`, `json`, `table` |
 | `--dark <mode>` | `both` | `both`, `media`, `class`, `light-dark`, `none` |
 | `--dark-selector <sel>` | `.dark` | Class or attribute that turns dark mode on |
-| `--hex` | | `css` format: hex values instead of `oklch()` |
+| `--hex` | | `css` and `shadcn`: hex values instead of `oklch()` |
 | `--prefix <prefix>` | `color` | `css` and `scss`: variable prefix (`scss` has none by default) |
 | `--status` | | Add `success`, `warning`, `danger` and `info` scales |
 | `--no-neutral` | | Do not add the tinted grey `neutral` |
@@ -26,6 +27,8 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 | `--pin` | | Put the exact input color on its closest step |
 | `--out <file>` | stdout | Write to a file |
 | `--check` | | Print failed contrast checks; exit code `1` if one fails. Also notes colors that look alike with a color vision deficiency |
+| `--target <ratio>` | `4.5` | `check`: contrast the pair needs |
+| `--count <n>` | `6` | `series`: number of chart colors, 2 to 8 |
 
 ## Check two colors
 
@@ -34,6 +37,10 @@ Colors can be hex (`#e30613`, `#f00`), `rgb()`, `hsl()` or `oklch()`. Quote them
 ```sh
 npx @sweberdev/gradient check "#ff5a5f" "#ffffff"
 ```
+
+## Chart colors
+
+`gradient series` prints colors for charts that stay apart under color vision deficiencies. `--count <n>` sets the number (2 to 8, default 6). See [Chart colors](chart-colors.md).
 
 ## In CI
 
