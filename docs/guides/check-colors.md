@@ -16,7 +16,7 @@ WCAG 2   3.05:1
   large text  AA pass   AAA fail
   icons, UI   pass (3:1)
 APCA     Lc 56.3 (WCAG 3 draft, for information)
-Needs 4.5:1. Closest color that passes: #db3742 (4.52:1, same hue).
+Needs 4.5:1. Closest color that passes: #db3742 (4.53:1, same hue).
 ```
 
 The first color is the text, the second the background. The command exits with `1` when the pair is below `--target` (default 4.5), so it works in CI. `--target 7` checks for AAA, `--target 3` for large text, icons and borders.

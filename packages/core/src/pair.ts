@@ -49,7 +49,7 @@ export function checkPair(foreground: string, background: string): PairCheck {
  * it already passes, and `null` when no lightness gets there.
  *
  * ```ts
- * fixContrast("#ff5a5f", "#ffffff") // "#db3742", 4.52:1 on white
+ * fixContrast("#ff5a5f", "#ffffff") // "#db3742", 4.53:1 on white
  * ```
  */
 export function fixContrast(foreground: string, background: string, target = 4.5): string | null {
