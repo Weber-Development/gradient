@@ -42,7 +42,7 @@ Keep the exact brand color with `--pin` (`pin: true` in code) if a design file n
 
 ## Upgrading Gradient
 
-Gradient follows [semantic versioning](../reference/stability.md). Every release from 0.1 to 0.8 was backward compatible: no function, option or output format was removed or renamed. New options are optional and new exports do not change existing ones.
+Gradient follows [semantic versioning](../reference/stability.md). Every release from 0.1 to 1.0 was backward compatible: no function, option or output format was removed or renamed. New options are optional and new exports do not change existing ones. Version 1.0.0 itself changes nothing compared to 0.9.0; it is the release from which the [stability policy](../reference/stability.md) applies.
 
 One behavior changed in a way you may notice: `contrast()`, `luminance()`, `simulate()` and `deltaE()` accept `rgb()`, `hsl()` and `oklch()` colors as well as hex (0.8.0). Before, they threw on anything but hex.
 

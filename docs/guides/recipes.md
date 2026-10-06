@@ -14,7 +14,7 @@ Keep the colors in a [config file](config-file.md) and run `gradient build` befo
     "prebuild": "gradient build",
     "lint:colors": "gradient build --verify"
   },
-  "devDependencies": { "@sweberdev/gradient": "^0.8.0" }
+  "devDependencies": { "@sweberdev/gradient": "^1.0.0" }
 }
 ```
 

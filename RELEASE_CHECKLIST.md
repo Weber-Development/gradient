@@ -3,10 +3,11 @@
 | Item | Status |
 |---|---|
 | Repo `Weber-Development/gradient` | public since 2026-10-05 |
-| npm `@sweberdev/gradient` | 0.1.0 published 2026-10-05 with provenance (needs the repo to stay public) |
+| npm `@sweberdev/gradient` | 1.0.0 published 2026-10-06 with provenance (needs the repo to stay public) |
 | packages.sweber.dev | entry, docs config and live demo at `/gradient/demo` (sxwxbxr/portfoliov3#56) |
 | Docs | Markdown in `docs/` with `nav.json`, rendered at packages.sweber.dev/gradient/docs |
-| Blog post | `content/blog/gradient-0-1-0-released.md` in portfoliov3 |
+| Blog posts | one per release in portfoliov3 `content/blog/`, `gradient-1-0-0-released.md` for 1.0 |
+| GitHub Action | `Weber-Development/gradient@v1` (`@v0` still works), both tags are moved by the release workflow |
 | Pro / Polar | none: Seya decided on 2026-10-05 that Gradient stays free |
 | Trademark check "Gradient" | open (Seya); the npm name is scoped, so no clash there |
 
